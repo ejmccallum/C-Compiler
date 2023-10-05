@@ -12,3 +12,6 @@ test:${EXE}
 
 debug:${EXE}
 	gdb --args ${EXE} sort.txt sort.exe
+
+clean:
+	rm -f ${EXE} *.o *.exe *.stackdump

@@ -4,48 +4,11 @@
 
 using namespace std;
 
-/*
-  from https://condor.depaul.edu/ichu/csc447/notes/wk2/pascal.html
-
-//<letter>::==A-Z
-//<digit>::=0-9
-//<sign> ::= + | -
-//<identifier> ::= <letter > {<letter or digit>}  
-//  ([a-zA-Z]\w*)
-<expression> ::= <simple expression> | 
-                <simple expression> <relational operator> <simple expression>
-//<relational operator> ::= = | <> | < | <= | >= | > | in
-<simple expression> ::= <term> | <sign> <term>| <simple expression> <adding operator> <term>
-// <adding operator> ::= + | - | or
-<term> ::= <factor> | <term> <multiplying operator> <factor>
-// <multiplying operator> ::= * | / | div | mod | and
-<factor> ::= <variable> | <unsigned constant> | ( <expression> )
-//<variable>::=<identifier> 
-//<unsigned constant> ::= <unsigned number>
-//<unsigned number> ::= <unsigned integer> | <unsigned real>
-//<unsigned integer> ::= <digit> {<digit>}
-// (/d+)
-//<unsigned real> ::= <unsigned integer> . <unsigned integer> | 
-                <unsigned integer> . <unsigned integer> E <scale factor>|
-                <unsigned integer> E <scale factor>
-// ([0-9]+)(\.)?([0-9]+)?(E[-+]?[0-9]+)?
-//<scale factor> ::= <unsigned integer> | <sign> <unsigned integer>
-*/
-
-/*
-
-
-*/
 
 enum TokenType {OPENPAREN, CLOSEPAREN, UNARY, ASSIGNMENT, EOL,
                 TYPE, RELATIONAL, SHIFT, MULTIPLYING, ADDING,
                 CONDITIONAL, AND, OR, INCLUSIVE_OR, EXCLUSIVE_OR,
                 EQUALITY, VARIABLE, INTEGER, REAL, ERROR}; 
-
-
-
-//enum TokenType {OPENPAREN,CLOSEPAREN,MULTIPLYING,ADDING,EOL,
-//                RELATIONAL,/*IDENTIFIER,*/VARIABLE,INTEGER,REAL,ERROR}; 
 
 class Token {
   TokenType token;
@@ -107,7 +70,7 @@ class Tokenizer {
       while (line[0]!='}' && line.length()>0) line=line.substr(1);
       line=line.substr(1);
     }
-    if(line.length()==0 || line == "\n") return Token(EOL);
+    if(line.length() == 0 || line == "\n") return Token(EOL);
 
     string f1=line.substr(0,1);
     string f2=line.substr(0,2);
@@ -116,10 +79,9 @@ class Tokenizer {
     string f5=line.substr(0,5);
     string f6=line.substr(0,6);
     string f8=line.substr(0,8);
-
+    
     if (regex_search(line,sm,rexp)) t=Token(REAL,sm[0]);
     else if (regex_search(line,sm,iexp)) t=Token(INTEGER,sm[0]);
-
     else if (f2=="*=" || f2=="/=" || f2=="%=" || f2=="+=" ||
              f2=="-=" || f2=="&=" || f2=="^=" || f2=="|=") t=Token(ASSIGNMENT,f2);
     else if (f3=="<<=" || f3==">>=") t=Token(ASSIGNMENT,f3);
@@ -174,7 +136,7 @@ int linenumber;
 bool success=true;
 
 void error(string message) {
-  cerr << filename <<':'<<linenumber<<':'<< 1 << " error"<< message<< endl;
+  cerr << filename <<':'<<linenumber<<':'<< 1 << " error "<< message<< endl;
   success=false;
 }
 
