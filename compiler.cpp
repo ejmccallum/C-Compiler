@@ -161,9 +161,9 @@ bool parse(ostream &out,istream &fin) {
   linenumber=0;
   success=true;
   Tokenizer scanner;
-  while (!fin.eof()){
+  while (getline(fin,line)){
     linenumber++;
-    getline(fin,line);
+
     while (line.length()>0) {
       Token t=scanner.getNext(line);
       if (t.getToken()==ERROR)
@@ -171,6 +171,7 @@ bool parse(ostream &out,istream &fin) {
       else 
         out << t << endl;
     }
+    //out << Token(EOL) << endl;
   }
   return success;
 }
