@@ -64,13 +64,29 @@ class Tokenizer {
     regex idexp(identReg);
     smatch sm;
     Token t;
-    while (line[0]==' ' || line[0]=='\t')  line=line.substr(1);
-    while (line[0]=='{') {
-      line=line.substr(1);
-      while (line[0]!='}' && line.length()>0) line=line.substr(1);
-      line=line.substr(1);
+
+    if(line == "\n" || line == "\r\n" || line == "\r") {
+      line = ""; 
+      return Token(EOL);
     }
-    if(line.length() == 0 || line == "\n") return Token(EOL);
+
+    bool changed = true;
+    while (changed) {
+      changed=false;
+      while (line[0]==' ' || line[0]=='\t') {
+        line=line.substr(1);
+        changed=true;
+      }
+      while (line[0]=='{') {
+        line=line.substr(1);
+        while (line[0]!='}' && line.length()>0) line=line.substr(1);
+        line=line.substr(1);
+        changed=true;
+      }
+    }
+
+
+    if(line.length() == 0) return Token(EOL);
 
     string f1=line.substr(0,1);
     string f2=line.substr(0,2);
