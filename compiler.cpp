@@ -73,7 +73,7 @@ class Tokenizer {
     bool changed = true;
     while (changed) {
       changed=false;
-      while (line[0]==' ' || line[0]=='\t') {
+      while (line[0]==' ' || line[0]=='\t' || line[0]=='\r' || line[0]=='\n') {
         line=line.substr(1);
         changed=true;
       }
