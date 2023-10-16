@@ -8,7 +8,7 @@ using namespace std;
 enum TokenType {OPENPAREN, CLOSEPAREN, UNARY, ASSIGNMENT, EOL,
                 TYPE, RELATIONAL, SHIFT, MULTIPLYING, ADDING,
                 CONDITIONAL, AND, OR, INCLUSIVE_OR, EXCLUSIVE_OR,
-                EQUALITY, VARIABLE, INTEGER, REAL, ERROR}; 
+                EQUALITY, VARIABLE, INTEGER, REAL, COMMA, ERROR}; 
 
 class Token {
   TokenType token;
@@ -40,6 +40,7 @@ class Token {
       case INCLUSIVE_OR: return "INCLUSIVE_OR";
       case EXCLUSIVE_OR: return "EXCLUSIVE_OR";
       case EQUALITY: return "EQUALITY";
+      case COMMA: return "COMMA";
       case ERROR: return "ERROR";
       case EOL: return "EOL";
       default: return "UNRECOGNIZED";
@@ -135,6 +136,8 @@ class Tokenizer {
 
     else if (f1=="?" || f1==":") t=Token(CONDITIONAL,f1);
 
+    else if (f1==",") t=Token(COMMA,f1);
+    
     else if (f1=="|") t=Token(INCLUSIVE_OR,f1);
     else if (f1=="^") t=Token(EXCLUSIVE_OR,f1);
 
@@ -151,76 +154,228 @@ string filename;
 int linenumber;
 bool success=true;
 
-void error(string message) {
+bool error(string message) {
   cerr << filename <<':'<<linenumber<<':'<< 1 << " error "<< message<< endl;
-  success=false;
+  return false;
 }
 
-bool parse(ostream &out,istream &fin) {
+
+class Tokens:public Tokenizer{
   string line;
-  linenumber=0;
-  success=true;
-  Tokenizer scanner;
-  while (getline(fin,line)){
-    linenumber++;
-
-    while (line.length()>0) {
-      Token t=scanner.getNext(line);
-      if (t.getToken()==ERROR)
-        error("Unrecognized character");
-      else 
-        out << t << endl;
+  ofstream fout;
+  ifstream fin;
+  void advance() {
+    if (line.length()>0) return;
+    while ((line.length()==0 || peekNext().getToken()==EOL) && !done() ) {
+      linenumber++;
+      getline(fin,line);
     }
-    //out << Token(EOL) << endl;
   }
-  return success;
-}
-
-class TestCase {
   public:
-  virtual bool run()=0; // Test cases when true succeeded
+  string getLine() { return line; }
+  bool done() {return fin.eof(); }
+  Tokens(string iFilename,string oFilename) {
+    linenumber=0;
+    success=true;
+    line="";
+    filename=iFilename;
+    fin.open(iFilename);
+    fout.open(oFilename);
+    advance();
+  }
+  Token getNext(){ 
+    while (Tokenizer::peekNext(line).getToken()!=EOL)
+      advance();
+    return Tokenizer::getNext(line); 
+  }
+  Token peekNext() {
+    string tempLine=line;
+    int tempLinenumber=linenumber;
+    advance();
+    Token tempToken=Tokenizer::peekNext(line);
+    line=tempLine;
+    linenumber=tempLinenumber;
+    return tempToken;
+  }
+  ~Tokens() {
+     fin.close();
+     fout.close();
+  }
 };
 
-class TestCaseFile:public TestCase {
-  string filein,fileout;
-  bool shouldFail;
-  public:
-  TestCaseFile(string newFilein,string newFileout,bool newShouldFail=false) {
-    filein=newFilein;
-    fileout=newFileout;
-    shouldFail=newShouldFail;
-  }
-  bool run() {
-    ifstream in;
-    ofstream out;
-    filename=filein;
-    in.open(filename);
-    out.open(fileout);
-    bool result=parse(out,in);
-    in.close();
-    out.close();
-    if (shouldFail && !result) result=true;
-    return result;
-  } 
-};
+bool expression(Tokens &tokens);
 
-vector<TestCase *> testcases;
-void runTests() {
-  cout << "Running tests" << endl;
-  for (auto t:testcases) {
-    if (t->run()) cout << "Success" <<endl;
-    else cout << "Failed" <<endl;
+bool logicalOrExpression(Tokens &tokens)
+{
+  
+}
+
+bool conditionalExpression(Tokens &tokens){
+  cout << "Conditional Expression " << tokens.getLine() << endl;
+  if(logicalOrExpression(tokens))
+  {
+    Token t = tokens.peekNext();
+    if (t.getToken() == CONDITIONAL)
+    {
+      tokens.getNext();
+      if(expression(tokens))
+      {
+        t = tokens.peekNext();
+        if(t.getToken() == CONDITIONAL)
+        {
+          tokens.getNext();
+          return conditionalExpression(tokens);
+        }
+        else
+        {
+          return error("Expected colon after expression");
+        }
+      }
+      else
+      {
+        return error("Expected expression");
+      }
+      
+    }
+    else
+    {
+      return true;
+    }
+  }
+  else
+  {
+    return error("Expected logical or expression");
   }
 }
-void addTestcases() {
-   testcases.push_back((TestCase *)new TestCaseFile("sort.pas","sort.txt"));
-   testcases.push_back((TestCase *)new TestCaseFile("sortOld.pas","sortOld.txt",true));
+
+bool assignmentExpression(Tokens &tokens){
+  cout << "Assignment Expression " << tokens.getLine() << endl;
+  if(conditionalExpression(tokens))
+  {
+    return true;
+  }
+  else if (unaryExpression(tokens))
+  {
+    Token t = tokens.peekNext();
+    if(t.getToken() == ASSIGNMENT)
+    {
+      tokens.getNext();
+      return assignmentExpression(tokens);
+    }
+    else
+    {
+      return error("Expected assignment operator");
+    }
+
+  }
+  else
+  {
+    return error("Expected conditional or unary expression");
+  }
+
 }
+
+bool expression(Tokens &tokens){
+  cout << "Expression " << tokens.getLine();
+  if(assignmentExpression(tokens))
+  {
+    Token t=tokens.peekNext();
+    if(t.getToken() == COMMA){
+      tokens.getNext();
+      return expression(tokens);
+    }
+    else{
+      return true;
+    }
+
+  }
+  else{
+    return error("Expected assignment expression");
+  }
+}
+
+
+// New bnf
+
+
+// //<expression> ::= <assignment-expression>  |  <assignment-expression> , <expression>
+
+// //<assignment-expression> ::= <conditional-expression>
+//                           | <unary-expression> <assignment-operator> <assignment-expression>
+
+// <conditional-expression> ::= <logical-or-expression>
+//                           | <logical-or-expression> ? <expression> : <conditional-expression>
+
+// <logical-or-expression> ::= <logical-and-expression>
+//                           | <logical-or-expression> || <logical-and-expression>
+
+// <logical-and-expression> ::= <inclusive-or-expression>
+//                            | <logical-and-expression> && <inclusive-or-expression>
+
+// <inclusive-or-expression> ::= <exclusive-or-expression>
+//                             | <inclusive-or-expression> | <exclusive-or-expression>
+
+// <exclusive-or-expression> ::= <and-expression>
+//                             | <exclusive-or-expression> ^ <and-expression>
+
+// <and-expression> ::= <equality-expression>
+//                    | <and-expression> & <equality-expression>
+
+// <equality-expression> ::= <relational-expression>
+//                         | <equality-expression> == <relational-expression>
+//                         | <equality-expression> != <relational-expression>
+
+// <relational-expression> ::= <shift-expression>
+//                           | <relational-expression> < <shift-expression>
+//                           | <relational-expression> > <shift-expression>
+//                           | <relational-expression> <= <shift-expression>
+//                           | <relational-expression> >= <shift-expression>
+
+// <shift-expression> ::= <additive-expression>
+//                      | <shift-expression> << <additive-expression>
+//                      | <shift-expression> >> <additive-expression>
+
+// <additive-expression> ::= <multiplicative-expression>
+//                         | <additive-expression> + <multiplicative-expression>
+//                         | <additive-expression> - <multiplicative-expression>
+
+// <multiplicative-expression> ::= <cast-expression>
+//                               | <multiplicative-expression> * <cast-expression>
+//                               | <multiplicative-expression> / <cast-expression>
+//                               | <multiplicative-expression> % <cast-expression>
+
+// <cast-expression> ::= <unary-expression>
+// <unary-expression> ::= <postfix-expression>
+//                      | ++ <unary-expression>
+//                      | -- <unary-expression>
+//                      | <unary-operator> <cast-expression>
+//                      | sizeof <unary-expression>
+
+
+// <postfix-expression> ::= <primary-expression>
+//                        | <postfix-expression> [ <expression> ]
+//                        | <postfix-expression> ( {<assignment-expression>}* )
+//                        | <postfix-expression> . <identifier>
+//                        | <postfix-expression> -> <identifier>
+//                        | <postfix-expression> ++
+//                        | <postfix-expression> –
+
+// <primary-expression> ::= <identifier>
+//                        | <constant>
+//                        | <string>
+//                        | ( <expression> )
+
+
+
+
+
+
+
 
 int main(int argc,char **argv) {
   if (argc==2 && string(argv[1])=="test") {
-    addTestcases(); 
-    runTests();
+    //addTestcases(); 
+    //runTests();
   }
   else if (argc<3) {
     cout << "Usage: pascal.exe <input.pas> <output.pas>"<<endl;
@@ -230,7 +385,7 @@ int main(int argc,char **argv) {
     fstream fin;
     filename=argv[1];
     fin.open(filename);
-    parse(cout,fin);
+    //parse(cout,fin);
     fin.close();
   }
 }
