@@ -5,7 +5,7 @@
 using namespace std;
 
 
-enum TokenType {OPENPAREN, CLOSEPAREN, UNARY, ASSIGNMENT, EOL,
+enum TokenType {OPENPAREN, CLOSEPAREN, OPENBRACKET, CLOSEBRACKET, UNARY, ASSIGNMENT, EOL,
                 TYPE, RELATIONAL, SHIFT, MULTIPLYING, ADDING,
                 CONDITIONAL, AND, OR, INCLUSIVE_OR, EXCLUSIVE_OR,
                 EQUALITY, VARIABLE, INTEGER, REAL, COMMA, ERROR}; 
@@ -27,6 +27,8 @@ class Token {
       case RELATIONAL: return "RELATIONAL";
       case OPENPAREN: return "OPENPAREN";
       case CLOSEPAREN: return "CLOSEPAREN";
+      case OPENBRACKET: return "OPENBRACKET";
+      case CLOSEBRACKET: return "CLOSEBRACKET";
       case VARIABLE: return "VARIABLE";
       case INTEGER: return "INTEGER";
       case REAL: return "REAL";
@@ -143,6 +145,8 @@ class Tokenizer {
 
     else if (f1=="(") t=Token(OPENPAREN,f1);
     else if (f1==")") t=Token(CLOSEPAREN,f1);
+    else if (f1=="[") t=Token(OPENBRACKET,f1);
+    else if (f1=="]") t=Token(CLOSEBRACKET,f1);
     //else if (f1.length()==0) t=Token(EOL);
     else t=Token(ERROR,f1);
     line=line.substr(t.getValue().length());
@@ -205,9 +209,221 @@ class Tokens:public Tokenizer{
 
 bool expression(Tokens &tokens);
 
+bool primaryExpression(Tokens &tokens) {
+    Token t = tokens.peekNext();
+    if (t.getToken() == VARIABLE || t.getToken() == INTEGER || t.getToken() == REAL || t.getToken() == OPENPAREN) {
+        tokens.getNext();
+        return true;
+    } else {
+        return error("Expected identifier, constant, string, or expression in parenthesis");
+    }
+}
+
+bool postfixExpression(Tokens &tokens) {
+    cout << "Postfix Expression " << tokens.getLine() << endl;
+    Token t = tokens.peekNext();
+    if (primaryExpression(tokens)) {
+        while (true) {
+            if (t.getToken() == OPENBRACKET) {
+                tokens.getNext();
+                if (!expression(tokens)) {
+                    return error("Expected expression inside []");
+                }
+                if (t.getToken() != CLOSEBRACKET) {
+                    return error("Expected ']'");
+                }
+            } else if (t.getToken() == OPENPAREN) {
+                tokens.getNext();
+                if (t.getToken() != CLOSEPAREN) {
+                    if (!expression(tokens)) {
+                        return error("Expected expression inside ()");
+                    }
+                }
+                if (t.getToken() != CLOSEPAREN) {
+                    return error("Expected ')'");
+                }
+            } else if (t.getToken() == UNARY) {
+                tokens.getNext();
+            } else {
+                break;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool castExpression(Tokens &tokens);
+
+bool unaryExpression(Tokens &tokens) {
+    Token t = tokens.peekNext();
+    if (t.getToken() == UNARY) {
+        tokens.getNext();
+        return castExpression(tokens);
+    } else {
+        return postfixExpression(tokens);
+    }
+}
+
+bool castExpression(Tokens &tokens) {
+    return unaryExpression(tokens);
+}
+
+bool multiplicativeExpression(Tokens &tokens) {
+    if (castExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == MULTIPLYING) {
+            tokens.getNext();
+            return multiplicativeExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected cast expression");
+    }
+}
+
+bool additiveExpression(Tokens &tokens) {
+    if (multiplicativeExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == ADDING) {
+            tokens.getNext();
+            return additiveExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected multiplicative expression");
+    }
+}
+
+bool shiftExpression(Tokens &tokens) {
+    if (additiveExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == SHIFT) {
+            tokens.getNext();
+            return shiftExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected additive expression");
+    }
+}
+
+bool relationalExpression(Tokens &tokens) {
+    if (shiftExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == RELATIONAL) {
+            tokens.getNext();
+            return relationalExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected shift expression");
+    }
+}
+
+bool equalityExpression(Tokens &tokens) {
+    if (relationalExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == EQUALITY) {
+            tokens.getNext();
+            return equalityExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected relational expression");
+    }
+}
+
+bool andExpression(Tokens &tokens) {
+    if (equalityExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == AND) {
+            tokens.getNext();
+            return andExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected equality expression");
+    }
+}
+
+bool exclusiveOrExpression(Tokens &tokens) {
+    if (andExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == EXCLUSIVE_OR) {
+            tokens.getNext();
+            return exclusiveOrExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected and expression");
+    }
+}
+
+bool inclusiveOrExpression(Tokens &tokens) {
+    if (exclusiveOrExpression(tokens)) {
+        Token t = tokens.peekNext();
+        if (t.getToken() == INCLUSIVE_OR) {
+            tokens.getNext();
+            return inclusiveOrExpression(tokens);
+        } else {
+            return true;
+        }
+    } else {
+        return error("Expected exclusive or expression");
+    }
+}
+
+bool logicalAndExpression(Tokens &tokens) {
+  cout << "Logical And Expression " << tokens.getLine() << endl;
+  if(inclusiveOrExpression(tokens))
+  {
+    Token t = tokens.peekNext();
+    if(t.getToken() == AND)
+    {
+      tokens.getNext();
+      return logicalAndExpression(tokens);
+    }
+    else
+    {
+      return error("Expected logical and operator");
+    }
+  }
+  else
+  {
+    return error("Expected inclusive or expression");
+  }
+  
+}
+
 bool logicalOrExpression(Tokens &tokens)
 {
-  
+  cout << "Logical Or Expression " << tokens.getLine() << endl;
+  if(logicalAndExpression(tokens))
+  {
+    Token t = tokens.peekNext();
+    if(t.getToken() == OR)
+    {
+      tokens.getNext();
+      return logicalOrExpression(tokens);
+    }
+    else
+    {
+      return error("Expected logical or operator");
+    }
+  }
+  else
+  {
+    return error("Expected logical and expression");
+  }
+
 }
 
 bool conditionalExpression(Tokens &tokens){
@@ -374,18 +590,17 @@ bool expression(Tokens &tokens){
 
 int main(int argc,char **argv) {
   if (argc==2 && string(argv[1])=="test") {
-    //addTestcases(); 
-    //runTests();
+    // addTestcases(); 
+    // runTests();
   }
   else if (argc<3) {
     cout << "Usage: pascal.exe <input.pas> <output.pas>"<<endl;
     cout << "<input.pas> is a text file that is the pascal source code." <<endl;
     cout << "<output.pas> is the name of the executable"<<endl;
   } else {
-    fstream fin;
-    filename=argv[1];
-    fin.open(filename);
-    //parse(cout,fin);
-    fin.close();
+    Tokens tokens("sort.txt",argv[2]);
+    bool b = expression(tokens);
+    if (b) cout << "Success your code parses" << endl;
+    else cout << "Failure your code does not parse" << endl;
   }
 }
