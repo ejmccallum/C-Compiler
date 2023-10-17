@@ -1,10 +1,62 @@
+#pragma once
 #include <iostream>
 #include <fstream>
 #include <regex>
-
-#include "token.h"
+#include <vector>
 
 using namespace std;
+
+
+
+enum TokenType {OPENPAREN, CLOSEPAREN, OPENBRACKET, CLOSEBRACKET, UNARY, ASSIGNMENT, EOL,
+                TYPE, RELATIONAL, SHIFT, MULTIPLYING, ADDING,
+                CONDITIONAL, AND, OR, INCLUSIVE_OR, EXCLUSIVE_OR,
+                EQUALITY, VARIABLE, INTEGER, REAL, COMMA, ERROR, DONE}; 
+
+class Token {
+  TokenType token;
+  string value;
+  public:
+  Token(TokenType newToken=ERROR,string newValue="") {
+    token=newToken;
+    value=newValue;
+  }
+  string getValue() { return value;}
+  TokenType getToken() {return token;}
+  string str() {
+    switch(token) {
+      case MULTIPLYING: return "MULTIPLYING";
+      case ADDING: return "ADDING";
+      case RELATIONAL: return "RELATIONAL";
+      case OPENPAREN: return "OPENPAREN";
+      case CLOSEPAREN: return "CLOSEPAREN";
+      case OPENBRACKET: return "OPENBRACKET";
+      case DONE: return "DONE";
+      case CLOSEBRACKET: return "CLOSEBRACKET";
+      case VARIABLE: return "VARIABLE";
+      case INTEGER: return "INTEGER";
+      case REAL: return "REAL";
+      case UNARY: return "UNARY";
+      case ASSIGNMENT: return "ASSIGNMENT";
+      case TYPE: return "TYPE";
+      case SHIFT: return "SHIFT";
+      case CONDITIONAL: return "CONDITIONAL";
+      case AND: return "AND";
+      case OR: return "OR";
+      case INCLUSIVE_OR: return "INCLUSIVE_OR";
+      case EXCLUSIVE_OR: return "EXCLUSIVE_OR";
+      case EQUALITY: return "EQUALITY";
+      case COMMA: return "COMMA";
+      case ERROR: return "ERROR";
+      case EOL: return "EOL";
+      default: return "UNRECOGNIZED";
+    }
+  }
+  friend ostream & operator <<(ostream &out,Token t) {
+    return out << t.str() << " " << t.value;
+  }
+};
+
 
 class Tokenizer {
   public:
@@ -20,13 +72,29 @@ class Tokenizer {
     regex idexp(identReg);
     smatch sm;
     Token t;
-    while (line[0]==' ' || line[0]=='\t')  line=line.substr(1);
-    while (line[0]=='{') {
-      line=line.substr(1);
-      while (line[0]!='}' && line.length()>0) line=line.substr(1);
-      line=line.substr(1);
+
+    if(line == "\n" || line == "\r\n" || line == "\r") {
+      line = ""; 
+      return Token(EOL);
     }
-    if(line.length() == 0 || line == "\n") return Token(EOL);
+
+    bool changed = true;
+    while (changed) {
+      changed=false;
+      while (line[0]==' ' || line[0]=='\t' || line[0]=='\r' || line[0]=='\n') {
+        line=line.substr(1);
+        changed=true;
+      }
+      while (line[0]=='{') {
+        line=line.substr(1);
+        while (line[0]!='}' && line.length()>0) line=line.substr(1);
+        line=line.substr(1);
+        changed=true;
+      }
+    }
+
+
+    if(line.length() == 0) return Token(EOL);
 
     string f1=line.substr(0,1);
     string f2=line.substr(0,2);
@@ -75,11 +143,15 @@ class Tokenizer {
 
     else if (f1=="?" || f1==":") t=Token(CONDITIONAL,f1);
 
+    else if (f1==",") t=Token(COMMA,f1);
+    
     else if (f1=="|") t=Token(INCLUSIVE_OR,f1);
     else if (f1=="^") t=Token(EXCLUSIVE_OR,f1);
 
     else if (f1=="(") t=Token(OPENPAREN,f1);
     else if (f1==")") t=Token(CLOSEPAREN,f1);
+    else if (f1=="[") t=Token(OPENBRACKET,f1);
+    else if (f1=="]") t=Token(CLOSEBRACKET,f1);
     //else if (f1.length()==0) t=Token(EOL);
     else t=Token(ERROR,f1);
     line=line.substr(t.getValue().length());

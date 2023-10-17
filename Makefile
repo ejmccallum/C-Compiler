@@ -15,3 +15,5 @@ debug:${EXE}
 
 clean:
 	rm -f ${EXE} *.o *.exe *.stackdump
+
+all: clean ${EXE} run
