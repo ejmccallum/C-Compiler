@@ -14,7 +14,6 @@ using namespace std;
 
 
 bool expression(Tokens &tokens);
-bool assignmentExpression(Tokens &tokens);
 
 bool primaryExpression(Tokens &tokens) {
     cout << "Primary Expression " << tokens.getLine() << endl;
@@ -53,50 +52,6 @@ bool primaryExpression(Tokens &tokens) {
     }
 }
 
-bool postfixExpression(Tokens &tokens) {
-    cout << "Postfix Expression " << tokens.getLine() << endl;
-    if (primaryExpression(tokens)) {
-        Token t = tokens.peekNext();
-        if (t.getToken() == OPENBRACKET) {
-            tokens.getNext();
-            if (expression(tokens)) {
-                t = tokens.peekNext();
-                if (t.getToken() == CLOSEBRACKET) {
-                    tokens.getNext();
-                    return true;
-                } else {
-                    return error("Expected closing bracket");
-                }
-            } else {
-                return error("Expected expression");
-            }
-        }
-        // } else if (t.getToken() == OPENPAREN) {
-        //     bool retval = assignmentExpression(tokens);
-        //     if(retval)
-        //     {
-        //         t = tokens.getNext();
-        //         if(t.getToken() == CLOSEPAREN)
-        //         {
-        //             return true;
-        //         }
-        //         else
-        //         {
-        //             return error("Expected closing parenthesis");
-        //         }
-        //     }
-            
-        // }
-        else
-        {
-            return true;
-        }
-    }
-
-    return error("Expected postfix expression");
-
-}
-
 
 bool unaryExpression(Tokens &tokens) {
     cout << "Unary Expression " << tokens.getLine() << endl;
@@ -106,7 +61,7 @@ bool unaryExpression(Tokens &tokens) {
         return unaryExpression(tokens);
     } 
     else {
-        return postfixExpression(tokens);
+        return primaryExpression(tokens);
     }
 }
 
@@ -438,11 +393,7 @@ bool expression(Tokens &tokens){
 
 // <postfix-expression> ::= <primary-expression>
 //                        | <postfix-expression> [ <expression> ]
-//                        | <postfix-expression> ( {<assignment-expression>}* )
-//                        | <postfix-expression> . <identifier>
-//                        | <postfix-expression> -> <identifier>
-//                        | <postfix-expression> ++
-//                        | <postfix-expression> –
+
 
 // <primary-expression> ::= <identifier>
 //                        | <constant>
