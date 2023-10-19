@@ -28,11 +28,11 @@ bool primaryExpression(Tokens &tokens) {
             t = tokens.getNext();
             if(t.getToken() == CLOSEPAREN)
             {
-                return true;
+              return true;
             }
             else
             {
-                return error("Expected ')'");
+              return error("Expected ')'");
             }
         }
         else{
@@ -319,11 +319,8 @@ bool assignmentExpression(Tokens &tokens){
   cout << "Assignment Expression " << tokens.getLine() << endl;
   if(conditionalExpression(tokens))
   {
-    return true;
-  }
-  else if (unaryExpression(tokens))
-  {
     Token t = tokens.peekNext();
+    cout << t << endl;
     if(t.getToken() == ASSIGNMENT)
     {
       tokens.getNext();
@@ -331,14 +328,32 @@ bool assignmentExpression(Tokens &tokens){
     }
     else
     {
-      return error("Expected assignment operator");
+      return true;
     }
-
   }
   else
   {
-    return error("Expected conditional or unary expression");
+    return error("Expected conditional expression");
   }
+
+  // if (unaryExpression(tokens))
+  // {
+  //   Token t = tokens.peekNext();
+  //   if(t.getToken() == ASSIGNMENT)
+  //   {
+  //     tokens.getNext();
+  //     return assignmentExpression(tokens);
+  //   }
+  //   else
+  //   {
+  //     return error("Expected assignment operator");
+  //   }
+
+  // }
+  // else
+  // {
+  //   return error("Expected unary expression");
+  // }
 
 }
 
