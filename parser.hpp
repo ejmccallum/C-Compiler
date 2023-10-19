@@ -384,15 +384,11 @@ bool expression(Tokens &tokens){
 //                               | <multiplicative-expression> % <cast-expression>
 
 // <cast-expression> ::= <unary-expression>
-// <unary-expression> ::= <postfix-expression>
+// <unary-expression> ::= <primary-expression>
 //                      | ++ <unary-expression>
 //                      | -- <unary-expression>
 //                      | <unary-operator> <cast-expression>
 //                      | sizeof <unary-expression>
-
-
-// <postfix-expression> ::= <primary-expression>
-//                        | <postfix-expression> [ <expression> ]
 
 
 // <primary-expression> ::= <identifier>
