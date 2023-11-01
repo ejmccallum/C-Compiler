@@ -11,9 +11,10 @@ using namespace std;
 #include "error.hpp"
 #include "token.hpp"
 #include "tokens.hpp"
+#include "AST.hpp"
 
 
-bool expression(Tokens &tokens);
+bool expression(Tokens &tokens, ASTNode *tree);
 
 bool primaryExpression(Tokens &tokens) {
     cout << "Primary Expression " << tokens.getLine() << endl;
@@ -111,14 +112,26 @@ bool shiftExpression(Tokens &tokens) {
     }
 }
 
-bool relationalExpression(Tokens &tokens) {
+bool relationalExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Relational Expression " << tokens.getLine() << endl;
-    if (shiftExpression(tokens)) {
+    ASTNode *lsubtree=new ASTNode();
+    if (shiftExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == RELATIONAL) {
             tokens.getNext();
-            return relationalExpression(tokens);
+            ASTNode *rsubtree=new ASTNode();
+            bool success = relationalExpression(tokens, rsubtree);
+            if(success)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
         } else {
+            *tree = *lsubtree;
             return true;
         }
     } else {
@@ -126,14 +139,27 @@ bool relationalExpression(Tokens &tokens) {
     }
 }
 
-bool equalityExpression(Tokens &tokens) {
+bool equalityExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Equality Expression " << tokens.getLine() << endl;
-    if (relationalExpression(tokens)) {
+    ASTNode *lsubtree=new ASTNode();
+    if (relationalExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == EQUALITY) {
             tokens.getNext();
-            return equalityExpression(tokens);
+            ASTNode *rsubtree=new ASTNode();
+            bool success = equalityExpression(tokens, rsubtree);
+            if(success)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
+
         } else {
+            *tree = *lsubtree;
             return true;
         }
     } else {
@@ -141,14 +167,26 @@ bool equalityExpression(Tokens &tokens) {
     }
 }
 
-bool andExpression(Tokens &tokens) {
+bool andExpression(Tokens &tokens, ASTNode *tree) {
     cout << "And Expression " << tokens.getLine() << endl;
-    if (equalityExpression(tokens)) {
+    ASTNode *lsubtree=new ASTNode();
+    if (equalityExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == AND) {
             tokens.getNext();
-            return andExpression(tokens);
+            ASTNode *rsubtree=new ASTNode();
+            bool success = andExpression(tokens, rsubtree);
+            if(success)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
         } else {
+            *tree = *lsubtree;
             return true;
         }
     } else {
@@ -156,14 +194,26 @@ bool andExpression(Tokens &tokens) {
     }
 }
 
-bool exclusiveOrExpression(Tokens &tokens) {
+bool exclusiveOrExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Exclusive Or Expression " << tokens.getLine() << endl;
-    if (andExpression(tokens)) {
+    ASTNode *lsubtree=new ASTNode();
+    if (andExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == EXCLUSIVE_OR) {
             tokens.getNext();
-            return exclusiveOrExpression(tokens);
+            ASTNode *rsubtree=new ASTNode();
+            bool success = exclusiveOrExpression(tokens, rsubtree);
+            if(success)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
         } else {
+            *tree = *lsubtree;
             return true;
         }
     } else {
@@ -171,14 +221,26 @@ bool exclusiveOrExpression(Tokens &tokens) {
     }
 }
 
-bool inclusiveOrExpression(Tokens &tokens) {
+bool inclusiveOrExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Inclusive Or Expression " << tokens.getLine() << endl;
-    if (exclusiveOrExpression(tokens)) {
+    ASTNode *lsubtree=new ASTNode();
+    if (exclusiveOrExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == INCLUSIVE_OR) {
             tokens.getNext();
-            return inclusiveOrExpression(tokens);
+            ASTNode *rsubtree=new ASTNode();
+            bool sucess = inclusiveOrExpression(tokens, rsubtree);
+            if(sucess)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
         } else {
+            *tree = *lsubtree;
             return true;
         }
     } else {
@@ -186,18 +248,30 @@ bool inclusiveOrExpression(Tokens &tokens) {
     }
 }
 
-bool logicalAndExpression(Tokens &tokens) {
+bool logicalAndExpression(Tokens &tokens,ASTNode *tree) {
   cout << "Logical And Expression " << tokens.getLine() << endl;
-  if(inclusiveOrExpression(tokens))
+  ASTNode *lsubtree=new ASTNode();
+  if(inclusiveOrExpression(tokens,lsubtree))
   {
     Token t = tokens.peekNext();
     if(t.getToken() == AND)
     {
       tokens.getNext();
-      return logicalAndExpression(tokens);
+      ASTNode *rsubtree=new ASTNode();
+      bool success = logicalAndExpression(tokens, rsubtree);
+      if(success)
+      {
+        *tree = ASTNode(t, lsubtree, rsubtree);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
     else
     {
+      *tree = *lsubtree;
       return true;
     }
   }
@@ -208,19 +282,32 @@ bool logicalAndExpression(Tokens &tokens) {
   
 }
 
-bool logicalOrExpression(Tokens &tokens)
+bool logicalOrExpression(Tokens &tokens, ASTNode *tree)
 {
   cout << "Logical Or Expression " << tokens.getLine() << endl;
-  if(logicalAndExpression(tokens))
+  ASTNode *lsubtree=new ASTNode();
+  if(logicalAndExpression(tokens, lsubtree))
   {
     Token t = tokens.peekNext();
     if(t.getToken() == OR)
     {
       tokens.getNext();
-      return logicalOrExpression(tokens);
+      ASTNode *rsubtree=new ASTNode();
+      bool success = logicalOrExpression(tokens, rsubtree);
+      if(success)
+      {
+        *tree = ASTNode(t, lsubtree, rsubtree);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+
     }
     else
     {
+      *tree = *lsubtree;
       return true;
     }
     
@@ -232,21 +319,32 @@ bool logicalOrExpression(Tokens &tokens)
 
 }
 
-bool conditionalExpression(Tokens &tokens){
+bool conditionalExpression(Tokens &tokens, ASTNode *tree){
   cout << "Conditional Expression " << tokens.getLine() << endl;
-  if(logicalOrExpression(tokens))
+  ASTNode *lsubtree=new ASTNode();
+  if(logicalOrExpression(tokens, lsubtree))
   {
     Token t = tokens.peekNext();
     if (t.getToken() == CONDITIONAL)
     {
       tokens.getNext();
-      if(expression(tokens))
+      ASTNode *rsubtree=new ASTNode();
+      if(expression(tokens, rsubtree))
       {
         t = tokens.peekNext();
         if(t.getToken() == CONDITIONAL)
         {
           tokens.getNext();
-          return conditionalExpression(tokens);
+          bool success = conditionalExpression(tokens, rsubtree);
+          if(success)
+          {
+            *tree = ASTNode(t, lsubtree, rsubtree);
+            return true;
+          }
+          else
+          {
+            return false;
+          }
         }
         else
         {
@@ -261,6 +359,7 @@ bool conditionalExpression(Tokens &tokens){
     }
     else
     {
+      *tree = *lsubtree;
       return true;
     }
   }
@@ -270,19 +369,30 @@ bool conditionalExpression(Tokens &tokens){
   }
 }
 
-bool assignmentExpression(Tokens &tokens){
+bool assignmentExpression(Tokens &tokens,ASTNode *tree){
   cout << "Assignment Expression " << tokens.getLine() << endl;
-  if(conditionalExpression(tokens))
+  ASTNode *lsubtree=new ASTNode();
+  if(conditionalExpression(tokens, lsubtree))
   {
     Token t = tokens.peekNext();
-    cout << t << endl;
+    ASTNode *rsubtree=new ASTNode();
     if(t.getToken() == ASSIGNMENT)
     {
       tokens.getNext();
-      return assignmentExpression(tokens);
+      bool success = assignmentExpression(tokens,rsubtree);
+      if(success)
+      {
+        *tree = ASTNode(t, lsubtree, rsubtree);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
     else
     {
+      *tree = *lsubtree;
       return true;
     }
   }
@@ -312,18 +422,29 @@ bool assignmentExpression(Tokens &tokens){
 
 }
 
-bool expression(Tokens &tokens){
+bool expression(Tokens &tokens, ASTNode *tree){
   cout << "Expression " << tokens.getLine() << endl;
-    Token t=tokens.peekNext();
+  Token t=tokens.peekNext();
+  ASTNode *lsubtree=new ASTNode();
 
-  if(assignmentExpression(tokens))
+  if(assignmentExpression(tokens, lsubtree))
   {
     if(t.getToken() == COMMA){
       tokens.getNext();
-      return expression(tokens);
+      ASTNode *rsubtree=new ASTNode();
+      bool success = expression(tokens, rsubtree);
+      if(success)
+      {
+        *tree = ASTNode(t, lsubtree, rsubtree);
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
     else{
-        
+      *tree = *lsubtree;  
       return true;
     }
 
