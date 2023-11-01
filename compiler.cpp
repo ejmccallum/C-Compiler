@@ -11,30 +11,31 @@ using namespace std;
 #include "error.hpp"
 #include "parser.hpp"
 #include "AST.hpp"
+#include "testAST.hpp"
 
 
 
-void testAST() {
-  ASTNode *three=new ASTNode(Token(INTEGER,"3"));
-  ASTNode *c=new ASTNode(Token(VARIABLE,"c"));
-  ASTNode *mul=new ASTNode(Token(MULTIPLYING,"*"),three,c);
-  ASTNode *a=new ASTNode(Token(VARIABLE,"a"));
-  ASTNode *lessEqual=new ASTNode(Token(RELATIONAL,"<="),mul,a);
-  ASTNode *root=lessEqual;
-  cout << root;
-}
+// void testAST() {
+//   ASTNode *three=new ASTNode(Token(INTEGER,"3"));
+//   ASTNode *c=new ASTNode(Token(VARIABLE,"c"));
+//   ASTNode *mul=new ASTNode(Token(MULTIPLYING,"*"),three,c);
+//   ASTNode *a=new ASTNode(Token(VARIABLE,"a"));
+//   ASTNode *lessEqual=new ASTNode(Token(RELATIONAL,"<="),mul,a);
+//   ASTNode *root=lessEqual;
+//   cout << root;
+// }
 
 
-void testAST2() {
-  ASTNode *four = new ASTNode(Token(INTEGER, "4"));
-  ASTNode *e = new ASTNode(Token(VARIABLE, "e"));
-  ASTNode *mul = new ASTNode(Token(MULTIPLYING, "*"), e, four);
-  ASTNode *d = new ASTNode(Token(VARIABLE, "d"));
-  ASTNode *sub = new ASTNode(Token(ADDING, "-"), d, mul);
-  ASTNode *root = sub;
-  cout << root;
-  cout << endl;
-}
+// void testAST2() {
+//   ASTNode *four = new ASTNode(Token(INTEGER, "4"));
+//   ASTNode *e = new ASTNode(Token(VARIABLE, "e"));
+//   ASTNode *mul = new ASTNode(Token(MULTIPLYING, "*"), e, four);
+//   ASTNode *d = new ASTNode(Token(VARIABLE, "d"));
+//   ASTNode *sub = new ASTNode(Token(ADDING, "-"), d, mul);
+//   ASTNode *root = sub;
+//   cout << root;
+//   cout << endl;
+// }
 
 
 int main(int argc,char **argv) {
@@ -52,7 +53,8 @@ int main(int argc,char **argv) {
     bool b = expression(tokens, root);
     if (b) cout << "Success your code parses" << endl;
     else cout << "Failure your code does not parse" << endl;
-    //testAST();
+    testAST();
     testAST2();
+    testAST3();
   }
 }
