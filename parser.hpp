@@ -16,65 +16,77 @@ using namespace std;
 
 bool expression(Tokens &tokens, ASTNode *tree);
 
-bool primaryExpression(Tokens &tokens) {
+bool primaryExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Primary Expression " << tokens.getLine() << endl;
-    Token t = tokens.getNext();
-    cout << t << endl;
-    if(t.getToken() == OPENPAREN)
-    {
-        bool retval = expression(tokens);
-        if(retval)
-        {
+    Token t = tokens.peekNext();
+    if(t.getToken() == OPENPAREN) {
+        tokens.getNext();
+        ASTNode *subtree = new ASTNode();
+        if (expression(tokens, subtree)) {
             t = tokens.getNext();
-            if(t.getToken() == CLOSEPAREN)
-            {
-              return true;
+            if(t.getToken() == CLOSEPAREN) {
+                *tree = *subtree;
+                return true;
+            } else {
+                return error("Expected ')'");
             }
-            else
-            {
-              return error("Expected ')'");
-            }
-        }
-        else{
+        } else {
             return error("Expected expression after '('");
         }
     }
-    if (t.getToken() == VARIABLE)
-    {
+    if (t.getToken() == VARIABLE) {
         cout << "Matched VARIABLE"<< endl;
+        tokens.getNext();
+        *tree = ASTNode(t);
         return true;
-    }
-    else if (t.getToken() == INTEGER || t.getToken() == REAL)
-    {
+    } else if (t.getToken() == INTEGER || t.getToken() == REAL) {
         cout << "Matched INTEGER or REAL" << endl;
+        tokens.getNext();
+        *tree = ASTNode(t);
         return true;
     } else {
         return error("Expected identifier, constant, string, or expression in parenthesis");
     }
 }
 
-
-bool unaryExpression(Tokens &tokens) {
+bool unaryExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Unary Expression " << tokens.getLine() << endl;
     Token t = tokens.peekNext();
     if (t.getToken() == UNARY) {
         tokens.getNext();
-        return unaryExpression(tokens);
-    } 
-    else {
-        return primaryExpression(tokens);
+        ASTNode *subtree = new ASTNode();
+        if (unaryExpression(tokens, subtree)) {
+            *tree = ASTNode(t, subtree);
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return primaryExpression(tokens, tree);
     }
 }
 
 
-bool multiplicativeExpression(Tokens &tokens) {
+bool multiplicativeExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Multiplicative Expression " << tokens.getLine() << endl;
-    if (unaryExpression(tokens)) {
+    ASTNode *lsubtree = new ASTNode();
+    if (unaryExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == MULTIPLYING) {
             tokens.getNext();
-            return multiplicativeExpression(tokens);
+            ASTNode *rsubtree = new ASTNode();
+            bool success = multiplicativeExpression(tokens, rsubtree);
+            if(success)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
         } else {
+            *tree = *lsubtree;
             return true;
         }
     } else {
@@ -82,14 +94,26 @@ bool multiplicativeExpression(Tokens &tokens) {
     }
 }
 
-bool additiveExpression(Tokens &tokens) {
+bool additiveExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Additive Expression " << tokens.getLine() << endl;
-    if (multiplicativeExpression(tokens)) {
+    ASTNode *lsubtree = new ASTNode();
+    if (multiplicativeExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == ADDING) {
             tokens.getNext();
-            return additiveExpression(tokens);
+            ASTNode *rsubtree = new ASTNode();
+            bool success = additiveExpression(tokens, rsubtree);
+            if(success)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
         } else {
+            *tree = *lsubtree;
             return true;
         }
     } else {
@@ -97,15 +121,29 @@ bool additiveExpression(Tokens &tokens) {
     }
 }
 
-bool shiftExpression(Tokens &tokens) {
+bool shiftExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Shift Expression " << tokens.getLine() << endl;
-    if (additiveExpression(tokens)) {
+    ASTNode *lsubtree = new ASTNode();
+    if (additiveExpression(tokens, lsubtree)) {
         Token t = tokens.peekNext();
         if (t.getToken() == SHIFT) {
             tokens.getNext();
-            return shiftExpression(tokens);
-        } else {
-            return true;
+            ASTNode *rsubtree = new ASTNode();
+            bool success = shiftExpression(tokens, rsubtree);
+            if(success)
+            {
+              *tree = ASTNode(t, lsubtree, rsubtree);
+              return true;
+            }
+            else
+            {
+              return false;
+            }
+        }
+        else
+        {
+          *tree = *lsubtree;
+          return true;
         }
     } else {
         return error("Expected additive expression");
