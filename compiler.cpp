@@ -50,11 +50,10 @@ int main(int argc,char **argv) {
   } else {
     Tokens tokens("sort.txt",argv[2]);
     ASTNode *root = new ASTNode();
+    cout << "Before Parsing " << root << endl;
     bool b = expression(tokens, root);
     if (b) cout << "Success your code parses" << endl;
     else cout << "Failure your code does not parse" << endl;
-    testAST();
-    testAST2();
-    testAST3();
+    cout << root << endl;
   }
 }
