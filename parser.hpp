@@ -17,7 +17,6 @@ using namespace std;
 bool expression(Tokens &tokens, ASTNode *tree);
 
 bool primaryExpression(Tokens &tokens, ASTNode *tree) {
-    cout << "Primary Expression " << tokens.getLine() << endl;
     Token t = tokens.peekNext();
     if(t.getToken() == OPENPAREN) {
         tokens.getNext();
@@ -26,6 +25,7 @@ bool primaryExpression(Tokens &tokens, ASTNode *tree) {
             t = tokens.getNext();
             if(t.getToken() == CLOSEPAREN) {
                 *tree = *subtree;
+                cout << tree;
                 return true;
             } else {
                 return error("Expected ')'");
@@ -76,14 +76,16 @@ bool multiplicativeExpression(Tokens &tokens, ASTNode *tree) {
             tokens.getNext();
             ASTNode *rsubtree = new ASTNode();
             bool success = multiplicativeExpression(tokens, rsubtree);
-            if(success)
-            {
-              *tree = ASTNode(t, lsubtree, rsubtree);
-              return true;
-            }
-            else
-            {
-              return false;
+            if(success) {
+                cout << "Perform multiplication of ";
+                cout << lsubtree;
+                cout << " and ";
+                cout << rsubtree;
+                cout << endl;
+                *tree = ASTNode(t, lsubtree, rsubtree);
+                return true;
+            } else {
+                return false;
             }
         } else {
             *tree = *lsubtree;
@@ -93,6 +95,7 @@ bool multiplicativeExpression(Tokens &tokens, ASTNode *tree) {
         return error("Expected unary expression");
     }
 }
+
 
 bool additiveExpression(Tokens &tokens, ASTNode *tree) {
     cout << "Additive Expression " << tokens.getLine() << endl;
@@ -105,6 +108,11 @@ bool additiveExpression(Tokens &tokens, ASTNode *tree) {
             bool success = additiveExpression(tokens, rsubtree);
             if(success)
             {
+              cout << "Perform addition of ";
+              cout << lsubtree;
+              cout << " and ";
+              cout << rsubtree;
+              cout << endl;
               *tree = ASTNode(t, lsubtree, rsubtree);
               return true;
             }
@@ -132,6 +140,11 @@ bool shiftExpression(Tokens &tokens, ASTNode *tree) {
             bool success = shiftExpression(tokens, rsubtree);
             if(success)
             {
+              cout << "Perform shift of ";
+              cout << lsubtree;
+              cout << " and ";
+              cout << rsubtree;
+              cout << endl;
               *tree = ASTNode(t, lsubtree, rsubtree);
               return true;
             }
@@ -161,6 +174,11 @@ bool relationalExpression(Tokens &tokens, ASTNode *tree) {
             bool success = relationalExpression(tokens, rsubtree);
             if(success)
             {
+              cout << "Perform relational of ";
+              cout << lsubtree;
+              cout << " and ";
+              cout << rsubtree;
+              cout << endl;
               *tree = ASTNode(t, lsubtree, rsubtree);
               return true;
             }
@@ -188,6 +206,11 @@ bool equalityExpression(Tokens &tokens, ASTNode *tree) {
             bool success = equalityExpression(tokens, rsubtree);
             if(success)
             {
+              cout << "Perform equality of ";
+              cout << lsubtree;
+              cout << " and ";
+              cout << rsubtree;
+              cout << endl;
               *tree = ASTNode(t, lsubtree, rsubtree);
               return true;
             }
@@ -216,6 +239,11 @@ bool andExpression(Tokens &tokens, ASTNode *tree) {
             bool success = andExpression(tokens, rsubtree);
             if(success)
             {
+              cout << "Perform and of ";
+              cout << lsubtree;
+              cout << " and ";
+              cout << rsubtree;
+              cout << endl;
               *tree = ASTNode(t, lsubtree, rsubtree);
               return true;
             }
@@ -243,6 +271,11 @@ bool exclusiveOrExpression(Tokens &tokens, ASTNode *tree) {
             bool success = exclusiveOrExpression(tokens, rsubtree);
             if(success)
             {
+              cout << "Perform exclusive or of ";
+              cout << lsubtree;
+              cout << " and ";
+              cout << rsubtree;
+              cout << endl;
               *tree = ASTNode(t, lsubtree, rsubtree);
               return true;
             }
@@ -270,6 +303,11 @@ bool inclusiveOrExpression(Tokens &tokens, ASTNode *tree) {
             bool sucess = inclusiveOrExpression(tokens, rsubtree);
             if(sucess)
             {
+              cout << "Perform inclusive or of ";
+              cout << lsubtree;
+              cout << " and ";
+              cout << rsubtree;
+              cout << endl;
               *tree = ASTNode(t, lsubtree, rsubtree);
               return true;
             }
@@ -299,6 +337,11 @@ bool logicalAndExpression(Tokens &tokens,ASTNode *tree) {
       bool success = logicalAndExpression(tokens, rsubtree);
       if(success)
       {
+        cout << "Perform logical and of ";
+        cout << lsubtree;
+        cout << " and ";
+        cout << rsubtree;
+        cout << endl;
         *tree = ASTNode(t, lsubtree, rsubtree);
         return true;
       }
@@ -334,6 +377,11 @@ bool logicalOrExpression(Tokens &tokens, ASTNode *tree)
       bool success = logicalOrExpression(tokens, rsubtree);
       if(success)
       {
+        cout << "Perform logical or of ";
+        cout << lsubtree;
+        cout << " and ";
+        cout << rsubtree;
+        cout << endl;
         *tree = ASTNode(t, lsubtree, rsubtree);
         return true;
       }
@@ -376,6 +424,11 @@ bool conditionalExpression(Tokens &tokens, ASTNode *tree){
           bool success = conditionalExpression(tokens, rsubtree);
           if(success)
           {
+            cout << "Perform conditional of ";
+            cout << lsubtree;
+            cout << " and ";
+            cout << rsubtree;
+            cout << endl;
             *tree = ASTNode(t, lsubtree, rsubtree);
             return true;
           }
@@ -420,6 +473,11 @@ bool assignmentExpression(Tokens &tokens,ASTNode *tree){
       bool success = assignmentExpression(tokens,rsubtree);
       if(success)
       {
+        cout << "Perform assignment of ";
+        cout << lsubtree;
+        cout << " and ";
+        cout << rsubtree;
+        cout << endl;
         *tree = ASTNode(t, lsubtree, rsubtree);
         return true;
       }
@@ -473,6 +531,10 @@ bool expression(Tokens &tokens, ASTNode *tree){
       bool success = expression(tokens, rsubtree);
       if(success)
       {
+        cout << lsubtree;
+        cout << " and ";
+        cout << rsubtree;
+        cout << " are an expression" << endl;
         *tree = ASTNode(t, lsubtree, rsubtree);
         return true;
       }
