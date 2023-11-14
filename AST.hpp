@@ -12,6 +12,14 @@ class ASTNode {
   Token t;
   vector<ASTNode *> children;
   public:
+  Token getToken() { return t; }
+  ASTNode *child(int i) { return children[i]; }
+  ASTNode *left() {
+    if (children.size()==0) return NULL; 
+    return children[LEFT]; }
+  ASTNode *right() {
+    if (children.size()<2) return NULL; 
+    return children[RIGHT]; }
   ASTNode(Token newT=Token(),ASTNode *left=NULL,ASTNode *right=NULL) {
     t=newT;
     if (left!=NULL) add(left);

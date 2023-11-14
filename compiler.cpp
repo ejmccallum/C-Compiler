@@ -15,27 +15,233 @@ using namespace std;
 
 
 
-// void testAST() {
-//   ASTNode *three=new ASTNode(Token(INTEGER,"3"));
-//   ASTNode *c=new ASTNode(Token(VARIABLE,"c"));
-//   ASTNode *mul=new ASTNode(Token(MULTIPLYING,"*"),three,c);
-//   ASTNode *a=new ASTNode(Token(VARIABLE,"a"));
-//   ASTNode *lessEqual=new ASTNode(Token(RELATIONAL,"<="),mul,a);
-//   ASTNode *root=lessEqual;
-//   cout << root;
-// }
+void interpret(ASTNode *root, double &result){
+  switch(root->getToken().getToken())
+  {
+    case RELATIONAL:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Relational operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="<=")
+        {
+          if(a<=b) result = 1;
+          else result = 0;
+        } else if(root->getToken().getValue()=="<")
+        {
+          if(a<b) result = 1;
+          else result = 0;
+        } else if(root->getToken().getValue()==">=")
+        {
+          if(a>=b) result = 1;
+          else result = 0;
+        } else if(root->getToken().getValue()==">")
+        {
+          if (a>b) result = 1;
+          else result = 0;
+        }
+      }
+      break;
+    case EQUALITY:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Equality operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="==")
+        {
+          if(a==b) result = 1;
+          else result = 0;
+        } else if(root->getToken().getValue()=="!=")
+        {
+          if(a!=b) result = 1;
+          else result = 0;
+        }
+      }
+      break;
+    case SHIFT:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Shift operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="<<")
+        {
+          result = (int)a << (int)b;
+        } else if(root->getToken().getValue()==">>")
+        {
+          result = (int)a >> (int)b;
+        }
+      }
+      break;
+    case ADDING:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Adding operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="+")
+        {
+          result = a+b;
+        } else if(root->getToken().getValue()=="-")
+        {
+          result = a-b;
+        }
+      }
+      break;
+    case MULTIPLYING:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Multiplying operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="*")
+        {
+          result = a*b;
+        } else if(root->getToken().getValue()=="/")
+        {
+          result = a/b;
+        } else if(root->getToken().getValue()=="%")
+        {
+          result = (int)a % (int)b;
+        }
+      }
+      break;
+    case INCLUSIVE_OR:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Inclusive or operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="|")
+        {
+          result = (int)a | (int)b;
+        }
+      }
+      break;
+    case EXCLUSIVE_OR:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Exclusive or operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="||")
+        {
+          result = (int)a || (int)b;
+        }
+      }
+      break;
+    case AND:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: And operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="&&")
+        {
+          result = (int)a && (int)b;
+        }
+      }
+      break;
+    case ASSIGNMENT:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Assignment operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->right(), a);
+        interpret(root->left(), b);
+        if(root->getToken().getValue()=="=")
+        {
+          result = a;
+        }
+        else if(root->getToken().getValue()=="*=")
+        {
+          result = b * a;
+        }
+        else if(root->getToken().getValue()=="/=")
+        {
+          result = b / a;
+        }
+        else if(root->getToken().getValue()=="+=")
+        {
+          result = b + a;
+        }
+        else if(root->getToken().getValue()=="-=")
+        {
+          result = b - a;
+        }
+        else if(root->getToken().getValue()=="%=")
+        {
+          b = (int)b % (int)a;
+          result = b;
+        }
+        else if(root->getToken().getValue()=="<<=")
+        {
+          b = (int)b << (int)a;
+          result = b;
+        }
+        else if(root->getToken().getValue()==">>=")
+        {
+          b = (int)b >> (int)a;
+          result = b;
+        }
+        else if(root->getToken().getValue()=="&=")
+        {
+          b = (int)b & (int)a;
+          result = b;
+        }
+        else if(root->getToken().getValue()=="^=")
+        {
+          b = (int)b ^ (int)a;
+          result = b;
+        }
+        else if(root->getToken().getValue()=="|=")
+        {
+          b = (int)b | (int)a;
+          result = b;
+        
+        }
+      }
+      break;
 
+    case INTEGER:
+      result = stoi(root->getToken().getValue());
+      break;
+    case REAL:
+      result = stod(root->getToken().getValue());
+      break;
+    
 
-// void testAST2() {
-//   ASTNode *four = new ASTNode(Token(INTEGER, "4"));
-//   ASTNode *e = new ASTNode(Token(VARIABLE, "e"));
-//   ASTNode *mul = new ASTNode(Token(MULTIPLYING, "*"), e, four);
-//   ASTNode *d = new ASTNode(Token(VARIABLE, "d"));
-//   ASTNode *sub = new ASTNode(Token(ADDING, "-"), d, mul);
-//   ASTNode *root = sub;
-//   cout << root;
-//   cout << endl;
-// }
+  }
+}
+
 
 
 int main(int argc,char **argv) {
@@ -52,7 +258,12 @@ int main(int argc,char **argv) {
     ASTNode *root = new ASTNode();
     cout << "Before Parsing " << root << endl;
     bool b = expression(tokens, root);
-    if (b) cout << "Success your code parses" << endl;
+    if (b) {
+      cout << "Success your code parses" << endl;
+      double result;
+      interpret(root, result);
+      cout << "Result: " << result << endl;
+    }
     else cout << "Failure your code does not parse" << endl;
     cout << root << endl;
   }
