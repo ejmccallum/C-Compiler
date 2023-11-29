@@ -37,8 +37,8 @@ void compile(ASTNode *root, string &s) {
         string a,b;
         compile(root->left(), a);
         compile(root->right(), b);
-        ss << b;
         ss << a;
+        ss << b;
         ss << "   pop %rax\n";
         ss << "   pop %rbx\n";
         ss << "   cmp %rax, %rbx\n";
@@ -52,13 +52,8 @@ void compile(ASTNode *root, string &s) {
             ss << "    jle "<< label << "\n";
         }else if(root->getToken().getValue()==">=") {
             ss << "    jge "<< label << "\n";
-        }else if(root->getToken().getValue()=="<>") {
-            ss << "    jne "<< label << "\n";
-        }else if(root->getToken().getValue()=="="){
-            ss << "    jeq "<< label << "\n";
-        }else if(root->getToken().getValue()=="in"){
-            
         }
+            
         ss << "    mov $0, %rax\n";
         ss << label << ":\n";
         ss << "    push %rax\n";
@@ -84,9 +79,9 @@ void compile(ASTNode *root, string &s) {
         ss << "   cmp %rax, %rbx\n";
         ss << "   mov $1, %rax\n";
         string label = uniqueLabel();
-        if(root->getToken().getValue()=="=") {
-            ss << "    jeq "<< label << "\n";
-        } else if(root->getToken().getValue()=="<>"){
+        if(root->getToken().getValue()=="==") {
+            ss << "    je "<< label << "\n";
+        } else if(root->getToken().getValue()=="!="){
             ss << "    jne "<< label << "\n";
         }
         ss << "    mov $0, %rax\n";
@@ -111,8 +106,7 @@ void compile(ASTNode *root, string &s) {
         ss << a;
         ss << "   pop %rax\n";
         ss << "   pop %rbx\n";
-        ss << "   mov %rax, %rcx\n";
-        ss << "   mov %rbx, %rax\n";
+        ss << "   mov %rbx, %rcx\n";
         if(root->getToken().getValue()=="<<") {
             ss << "    shl %cl, %rax\n";
         } else if(root->getToken().getValue()==">>"){
@@ -134,16 +128,30 @@ void compile(ASTNode *root, string &s) {
         string a,b;
         compile(root->left(), a);
         compile(root->right(), b);
-        ss << b;
-        ss << a;
-        ss << "   pop %rax\n";
-        ss << "   pop %rbx\n";
-        ss << "   mov %rax, %rcx\n";
-        ss << "   mov %rbx, %rax\n";
         if(root->getToken().getValue()=="+") {
-            ss << "    add %cl, %rax\n";
+          ss << a;
+          ss << b;
+          ss << "   pop %rax\n";
+          ss << "   pop %rbx\n";
+          ss << "    add %rbx, %rax\n";
+          
         } else if(root->getToken().getValue()=="-"){
-            ss << "    sub %cl, %rax\n";
+          
+          if (root->left()==NULL && root->right()==NULL) {
+            cerr << "Adding with out two operands" << endl;
+            return;
+            } else {
+            if (root->right()!=NULL) compile(root->right(),b);
+            if (root->right()!=NULL) {
+              ss <<b;
+              ss <<a;
+              ss << "    pop %rax"<<endl;
+              ss << "    pop %rbx"<<endl;
+              ss << "    sub %rbx,%rax"<<endl;
+            }
+          }
+          
+          
         }
         ss << "    push %rax\n";
         s = ss.str();
@@ -165,14 +173,15 @@ void compile(ASTNode *root, string &s) {
         ss << a;
         ss << "   pop %rax\n";
         ss << "   pop %rbx\n";
-        ss << "   mov %rax, %rcx\n";
-        ss << "   mov %rbx, %rax\n";
         if(root->getToken().getValue()=="*") {
-            ss << "    mul %cl, %rax\n";
+            ss << "    mul %rbx\n";
         } else if(root->getToken().getValue()=="/"){
-            ss << "    div %cl, %rax\n";
+            ss << "    xor %rdx,%rdx" << endl;
+            ss << "    div %rbx\n";
         } else if(root->getToken().getValue()=="%"){
-            ss << "    mod %cl, %rax\n";
+            ss << "    xor %rdx,%rdx" << endl;
+            ss << "    idiv %rbx\n";
+            ss << "    mov %rdx, %rax\n";
         }
         ss << "    push %rax\n";
         s = ss.str();
@@ -194,10 +203,8 @@ void compile(ASTNode *root, string &s) {
         ss << a;
         ss << "   pop %rax\n";
         ss << "   pop %rbx\n";
-        ss << "   mov %rax, %rcx\n";
-        ss << "   mov %rbx, %rax\n";
         if(root->getToken().getValue()=="|") {
-            ss << "    or %cl, %rax\n";
+            ss << "    or %rbx, %rax\n";
         }
         ss << "    push %rax\n";
         s = ss.str();
@@ -219,10 +226,8 @@ void compile(ASTNode *root, string &s) {
         ss << a;
         ss << "   pop %rax\n";
         ss << "   pop %rbx\n";
-        ss << "   mov %rax, %rcx\n";
-        ss << "   mov %rbx, %rax\n";
         if(root->getToken().getValue()=="^") {
-            ss << "    xor %cl, %rax\n";
+            ss << "    xor %rbx, %rax\n";
         }
         ss << "    push %rax\n";
         s = ss.str();
@@ -265,26 +270,30 @@ void compile(ASTNode *root, string &s) {
         string a,b;
         compile(root->right(), a);
         compile(root->left(), b);
-        ss << a;
         ss << b;
+        ss << a;
         ss << "   pop %rax\n";
         ss << "   pop %rbx\n";
         if(root->getToken().getValue()=="=") {
             ss << "    mov %rax, %rbx\n";
         } else if(root->getToken().getValue()=="*="){
-            ss << "    mul %rbx, %rax\n";
+            ss << "    mul %rbx\n";
         } else if(root->getToken().getValue()=="/="){
-            ss << "    div %rbx, %rax\n";
+            ss << "    xor %rdx,%rdx" << endl;
+            ss << "    div %rbx\n";
         } else if(root->getToken().getValue()=="+="){
             ss << "    add %rbx, %rax\n";
         } else if(root->getToken().getValue()=="-="){
             ss << "    sub %rbx, %rax\n";
         } else if(root->getToken().getValue()=="%="){
-            ss << "    mod %rbx, %rax\n";
+            ss << "    xor %rdx,%rdx" << endl;
+            ss << "    idiv %rbx\n";
         } else if(root->getToken().getValue()=="<<="){
-            ss << "    shl %rbx, %rax\n";
+            ss << "   mov %rbx, %rcx\n";
+            ss << "    shl %cl, %rax\n";
         } else if(root->getToken().getValue()==">>="){
-            ss << "    shr %rbx, %rax\n";
+            ss << "   mov %rbx, %rcx\n";
+            ss << "    shr %cl, %rax\n";
         } else if(root->getToken().getValue()=="&="){
             ss << "    and %rbx, %rax\n";
         } else if(root->getToken().getValue()=="^="){
@@ -446,7 +455,7 @@ void interpret(ASTNode *root, double &result){
         }
       }
       break;
-    case INCLUSIVE_OR:
+    case OR:
       if(root->left()==NULL || root->right()==NULL)
       {
         cerr << "Error: Inclusive or operator missing operands" << endl;
@@ -457,11 +466,11 @@ void interpret(ASTNode *root, double &result){
         interpret(root->right(), b);
         if(root->getToken().getValue()=="|")
         {
-          result = (int)a | (int)b;
+          result = (int)a || (int)b;
         }
       }
       break;
-    case EXCLUSIVE_OR:
+    case INCLUSIVE_OR:
       if(root->left()==NULL || root->right()==NULL)
       {
         cerr << "Error: Exclusive or operator missing operands" << endl;
@@ -470,9 +479,9 @@ void interpret(ASTNode *root, double &result){
         double a, b;
         interpret(root->left(), a);
         interpret(root->right(), b);
-        if(root->getToken().getValue()=="||")
+        if(root->getToken().getValue()=="|")
         {
-          result = (int)a || (int)b;
+          result = (int)a | (int)b;
         }
       }
       break;
@@ -488,6 +497,21 @@ void interpret(ASTNode *root, double &result){
         if(root->getToken().getValue()=="&&")
         {
           result = (int)a && (int)b;
+        }
+      }
+      break;
+    case EXCLUSIVE_OR:
+      if(root->left()==NULL || root->right()==NULL)
+      {
+        cerr << "Error: Or operator missing operands" << endl;
+        return;
+      } else{
+        double a, b;
+        interpret(root->left(), a);
+        interpret(root->right(), b);
+        if(root->getToken().getValue()=="^")
+        {
+          result = (int)a ^ (int)b;
         }
       }
       break;
@@ -577,7 +601,7 @@ int main(int argc,char **argv) {
     cout << "<input.pas> is a text file that is the pascal source code." <<endl;
     cout << "<output.pas> is the name of the executable"<<endl;
   } else {
-    Tokens tokens("sort.txt",argv[2]);
+    Tokens tokens(argv[1],argv[2]);
     ASTNode *root = new ASTNode();
     cout << "Before Parsing " << root << endl;
     bool b = expression(tokens, root);
@@ -585,12 +609,15 @@ int main(int argc,char **argv) {
       cout << "Success your code parses" << endl;
       double result;
       string assembly;
+      cout << "interpretation result: ";
       interpret(root, result);
+      cout << result << endl;
+      cout << "assembly result: ";
       compileHelper(root, assembly);
-      ofstream out(argv[2]);
+      ofstream out;
+      out.open(argv[2]);
       out << assembly;
       out.close();
-      cout << "Result: " << result << endl;
     }
     else cout << "Failure your code does not parse" << endl;
     cout << root << endl;
